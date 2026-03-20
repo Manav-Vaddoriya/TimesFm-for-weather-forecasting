@@ -1,0 +1,26 @@
+# ============================================================
+# Weather Pipeline Configuration
+# ============================================================
+
+pipeline:
+  grib_file: "data.grib"
+  years: [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+
+data:
+  raw_chunks_per_year: 5
+  series_id_batch_size: 1_000_000
+
+temperature:
+  dtype: "float16"
+
+coordinates:
+  dtype: "float32"
+  round_decimals: 2
+
+patches:
+  patch_size: 32
+  pad_value: 0.0
+
+storage:
+  # Local directory where all pipeline outputs are saved
+  output_dir: "D:/projects 2/TimesFM and anomaly detection/output"

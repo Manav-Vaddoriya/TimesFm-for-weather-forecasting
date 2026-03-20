@@ -1,0 +1,10 @@
+cfgrib
+xarray
+pandas
+numpy
+pyarrow
+fastparquet
+pyyaml
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
