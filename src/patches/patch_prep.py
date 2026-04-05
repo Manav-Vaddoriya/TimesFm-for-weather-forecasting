@@ -52,11 +52,18 @@ def process_parquet_file(file_path: Path, output_dir: Path) -> int:
     and save the patch array + metadata to `output_dir`.
 
     Returns the total number of patches saved.
+
+    Raises:
+        Exception: On file I/O or processing errors (logged before re-raise).
     """
     patch_size = settings.patches.patch_size
     pad_value = settings.patches.pad_value
 
-    df = pd.read_parquet(file_path)
+    try:
+        df = pd.read_parquet(file_path)
+    except Exception as e:
+        logger.error("Failed to read parquet file '%s': %s", file_path, e, exc_info=True)
+        raise
 
     required = {"series_id", "temperature"}
     missing = required - set(df.columns)
@@ -75,32 +82,41 @@ def process_parquet_file(file_path: Path, output_dir: Path) -> int:
     global_patch_idx = 0
 
     for sid, group in df.groupby("series_id", sort=False):
-        ts = group["temperature"].to_numpy(dtype=np.float32)
-        patches = _make_patches(ts, patch_size, pad_value)
+        try:
+            ts = group["temperature"].to_numpy(dtype=np.float32)
+            patches = _make_patches(ts, patch_size, pad_value)
 
-        if patches.shape[0] == 0:
+            if patches.shape[0] == 0:
+                continue
+
+            all_patches.append(patches)
+            for _ in range(patches.shape[0]):
+                metadata_rows.append({"series_id": sid, "patch_idx": global_patch_idx})
+                global_patch_idx += 1
+        except Exception as e:
+            logger.error("Error processing series '%s' in %s: %s", sid, file_path.name, e, exc_info=True)
             continue
-
-        all_patches.append(patches)
-        for _ in range(patches.shape[0]):
-            metadata_rows.append({"series_id": sid, "patch_idx": global_patch_idx})
-            global_patch_idx += 1
 
     if not all_patches:
         logger.warning("No valid patches produced from %s.", file_path.name)
         return 0
 
-    patch_array = np.vstack(all_patches)
-    metadata_df = pd.DataFrame(metadata_rows)
+    try:
+        patch_array = np.vstack(all_patches)
+        metadata_df = pd.DataFrame(metadata_rows)
 
-    stem = file_path.stem
-    np.save(output_dir / f"{stem}_patches.npy", patch_array)
-    metadata_df.to_parquet(output_dir / f"{stem}_metadata.parquet", index=False)
+        stem = file_path.stem
+        np.save(output_dir / f"{stem}_patches.npy", patch_array)
+        metadata_df.to_parquet(output_dir / f"{stem}_metadata.parquet", index=False)
 
-    logger.info(
-        "Patched %s → %d patches saved to %s", file_path.name, patch_array.shape[0], output_dir
-    )
-    return patch_array.shape[0]
+        logger.info(
+            "Patched %s → %d patches saved to %s", file_path.name, patch_array.shape[0], output_dir
+        )
+        return patch_array.shape[0]
+
+    except Exception as e:
+        logger.error("Failed to save patches from %s: %s", file_path.name, e, exc_info=True)
+        raise
 
 
 # ── year-level orchestration ──────────────────────────────────────────────────
@@ -112,7 +128,12 @@ def process_year(year: int, staging_dir: Path) -> None:
     """
     year_dir = staging_dir / f"{year}_weather_data"
     output_dir = year_dir / "patches"
-    output_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        logger.error("Cannot create patches directory '%s': %s", output_dir, e)
+        raise
 
     parquet_files = sorted(year_dir.glob("weather_part_*.parquet"))
     if not parquet_files:
@@ -121,6 +142,13 @@ def process_year(year: int, staging_dir: Path) -> None:
 
     total = 0
     for file_path in parquet_files:
-        total += process_parquet_file(file_path, output_dir)
+        try:
+            total += process_parquet_file(file_path, output_dir)
+        except Exception as e:
+            logger.error(
+                "Patch generation failed for %s — skipping: %s",
+                file_path.name, e, exc_info=True,
+            )
+            continue
 
     logger.info("Year %d complete — %d total patches written.", year, total)

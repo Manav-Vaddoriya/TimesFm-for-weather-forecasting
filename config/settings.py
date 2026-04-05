@@ -30,6 +30,41 @@ class StorageConfig:
 
 
 @dataclass(frozen=True)
+class TrainingConfig:
+    """Hyperparameters for TimesFMLiteGPT training."""
+    d_model: int
+    n_layers: int
+    n_heads: int
+    d_ff: int
+    dropout: float
+    context_len: int
+    batch_size: int
+    lr: float
+    weight_decay: float
+    epochs: int
+    num_workers: int
+    train_files: int
+    val_files: int
+    test_files: int
+    model_output_dir: Path
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "model_output_dir", Path(self.model_output_dir))
+
+    def to_model_config(self, patch_len: int) -> dict:
+        """Build the config dict expected by TimesFMLiteGPT."""
+        return {
+            "patch_len": patch_len,
+            "d_model": self.d_model,
+            "n_layers": self.n_layers,
+            "n_heads": self.n_heads,
+            "d_ff": self.d_ff,
+            "dropout": self.dropout,
+            "context_len": self.context_len,
+        }
+
+
+@dataclass(frozen=True)
 class PipelineSettings:
     grib_file: Path
     years: List[int]
@@ -40,6 +75,7 @@ class PipelineSettings:
     coord_round_decimals: int
     patches: PatchConfig
     storage: StorageConfig
+    training: TrainingConfig
 
 
 def load_settings(config_path: Path = _CONFIG_PATH) -> PipelineSettings:
@@ -59,6 +95,7 @@ def load_settings(config_path: Path = _CONFIG_PATH) -> PipelineSettings:
         storage=StorageConfig(
             output_dir=raw["storage"]["output_dir"],
         ),
+        training=TrainingConfig(**raw["training"]),
     )
 
 

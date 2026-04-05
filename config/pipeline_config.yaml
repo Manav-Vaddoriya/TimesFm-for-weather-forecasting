@@ -24,3 +24,28 @@ patches:
 storage:
   # Local directory where all pipeline outputs are saved
   output_dir: "D:/projects 2/TimesFM and anomaly detection/output"
+
+# ── Model Training ──────────────────────────────────────────
+training:
+  # Model architecture
+  d_model: 128
+  n_layers: 6
+  n_heads: 4
+  d_ff: 512
+  dropout: 0.1
+  context_len: 32
+
+  # Training hyperparameters
+  batch_size: 64
+  lr: 0.001
+  weight_decay: 0.00001
+  epochs: 5
+  num_workers: 2
+
+  # Data split — number of .npy patch files per split
+  train_files: 3    # first N files for training
+  val_files: 1      # next N files for validation
+  test_files: 1     # remaining files for testing
+
+  # Output directory for model weights, metrics, plots
+  model_output_dir: "D:/projects 2/TimesFM and anomaly detection/models/pretrained model"

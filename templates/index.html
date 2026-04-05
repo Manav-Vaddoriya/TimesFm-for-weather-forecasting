@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimesFM Weather Forecaster & Anomaly Detector</title>
+    <meta name="description" content="AI-powered weather forecasting and anomaly detection using TimesFM-Lite and knowledge distillation">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading">
+        <div class="spinner-wrap">
+            <div class="spinner"></div>
+            <div class="spinner-text">Fetching weather data, predicting & detecting anomalies…</div>
+        </div>
+    </div>
+
+    <!-- Error toast -->
+    <div class="toast" id="toast"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-badge">⚡ AI-Powered Forecasting & Anomaly Detection</div>
+            <h1>TimesFM Weather Forecaster</h1>
+            <p>Predict the next 32 hours using a Transformer model and detect anomalies with a distilled MLP</p>
+        </div>
+
+        <!-- Search -->
+        <div class="search-section">
+            <div class="search-bar">
+                <input type="text" class="search-input" id="cityInput"
+                       placeholder="Enter city name (e.g. Mumbai, London, Tokyo…)"
+                       autocomplete="off">
+                <button class="search-btn" id="searchBtn" onclick="handleSearch()">Predict</button>
+            </div>
+        </div>
+
+        <!-- Location tag -->
+        <div class="location-tag" id="locationTag">
+            <span id="locationText">📍 City, Country</span>
+        </div>
+
+        <!-- Content area -->
+        <div id="contentArea">
+            <!-- Empty state -->
+            <div class="empty-state" id="emptyState">
+                <div class="icon">🌤️</div>
+                <p>Search for a city to see AI-powered weather predictions and anomaly detection using TimesFM-Lite & distilled MLP</p>
+            </div>
+
+            <!-- Results (hidden initially) -->
+            <div id="results" style="display:none">
+                <!-- Current weather cards -->
+                <div class="cards-grid fade-in" id="weatherCards">
+                    <div class="card">
+                        <div class="card-label">Current Temperature</div>
+                        <div class="card-value temp" id="currentTemp">--</div>
+                        <div class="card-unit">°C</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Humidity</div>
+                        <div class="card-value humidity" id="currentHumidity">--</div>
+                        <div class="card-unit">%</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-label">Wind Speed</div>
+                        <div class="card-value wind" id="currentWind">--</div>
+                        <div class="card-unit">km/h</div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-card fade-in">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Temperature Forecast</div>
+                            <div class="chart-subtitle">Historical (72h) + AI Prediction (32h)</div>
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:var(--accent-cyan)"></div>
+                                Historical
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:var(--accent-orange)"></div>
+                                Predicted
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Anomaly Detection Results -->
+                <div class="chart-card fade-in anomaly-section" id="anomalySection">
+                    <div class="anomaly-header">
+                        <div class="anomaly-title">
+                            🔍 Anomaly Detection — Probabilities
+                        </div>
+                        <div style="font-size:13px; color:var(--text-muted)">
+                            MLP Soft Label Output
+                        </div>
+                    </div>
+                    <div class="anomaly-grid" id="anomalyGrid"></div>
+                </div>
+
+                <!-- Model info -->
+                <div class="model-bar fade-in" id="modelBar">
+                    <div class="model-stat">
+                        <div class="model-stat-label">Forecasting Model</div>
+                        <div class="model-stat-value" id="forecastModel">TimesFMLiteGPT</div>
+                        <div class="model-stat-label" style="margin-top:8px">Parameters</div>
+                        <div class="model-stat-value" id="forecastParams">--</div>
+                    </div>
+                    <div class="model-stat">
+                        <div class="model-stat-label">Anomaly Model</div>
+                        <div class="model-stat-value" id="anomalyModel">MLPStudentModel</div>
+                        <div class="model-stat-label" style="margin-top:8px">Parameters</div>
+                        <div class="model-stat-value" id="anomalyParams">--</div>
+                    </div>
+                    <div class="model-stat">
+                        <div class="model-stat-label">Context Window</div>
+                        <div class="model-stat-value" id="modelContext">--</div>
+                        <div class="model-stat-label" style="margin-top:8px">Forecast Horizon</div>
+                        <div class="model-stat-value" id="modelHorizon">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
