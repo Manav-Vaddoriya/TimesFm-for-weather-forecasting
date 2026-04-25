@@ -65,6 +65,31 @@ class TrainingConfig:
 
 
 @dataclass(frozen=True)
+class DistillationConfig:
+    """Hyperparameters for anomaly-detection knowledge distillation."""
+    data_dir: Path
+    train_parts: List[int]
+    val_parts: List[int]
+    test_parts: List[int]
+    window_size: int
+    hidden_dims: List[int]
+    dropout: float
+    epochs: int
+    batch_size: int
+    lr: float
+    weight_decay: float
+    huber_delta: float
+    lr_min: float
+    threshold: float
+    num_workers: int
+    model_output_dir: Path
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "data_dir", Path(self.data_dir))
+        object.__setattr__(self, "model_output_dir", Path(self.model_output_dir))
+
+
+@dataclass(frozen=True)
 class PipelineSettings:
     grib_file: Path
     years: List[int]
@@ -76,6 +101,7 @@ class PipelineSettings:
     patches: PatchConfig
     storage: StorageConfig
     training: TrainingConfig
+    distillation: DistillationConfig
 
 
 def load_settings(config_path: Path = _CONFIG_PATH) -> PipelineSettings:
@@ -96,6 +122,7 @@ def load_settings(config_path: Path = _CONFIG_PATH) -> PipelineSettings:
             output_dir=raw["storage"]["output_dir"],
         ),
         training=TrainingConfig(**raw["training"]),
+        distillation=DistillationConfig(**raw["distillation"]),
     )
 
 

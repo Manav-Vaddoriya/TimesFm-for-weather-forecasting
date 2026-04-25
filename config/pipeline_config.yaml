@@ -49,3 +49,39 @@ training:
 
   # Output directory for model weights, metrics, plots
   model_output_dir: "D:/projects 2/TimesFM and anomaly detection/models/pretrained model"
+
+# ── Anomaly Detection — Knowledge Distillation ──────────────────
+distillation:
+  # Data preparation — directory for distillation parquet outputs
+  data_dir: "D:/projects 2/TimesFM and anomaly detection/output/distillation_dataset"
+
+  # Data split — parquet part indices (1-indexed)
+  train_parts: [1, 2, 3]
+  val_parts:   [4]
+  test_parts:  [5]
+
+  # Student MLP architecture
+  window_size:  32
+  hidden_dims:  [512, 128, 64, 32]
+  dropout:      0.2
+
+  # Training hyperparameters
+  epochs:       10
+  batch_size:   256
+  lr:           0.0005
+  weight_decay: 0.001
+
+  # Loss
+  huber_delta:  1.0
+
+  # Scheduler
+  lr_min:       0.000001
+
+  # Anomaly threshold (for segmentation)
+  threshold:    0.9
+
+  # Number of workers for data loading
+  num_workers:  2
+
+  # Output directory for distilled model weights, metrics
+  model_output_dir: "D:/projects 2/TimesFM and anomaly detection/models/distilled model"
