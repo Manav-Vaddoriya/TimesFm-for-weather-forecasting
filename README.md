@@ -129,6 +129,45 @@ For further information, refer to the notebook in the notebooks folder.
 
 ---
 
+## Running the Application
+
+This project exposes the same forecasting and anomaly-detection models through
+two independent services that can run side by side:
+
+| Service | Command | Port | Purpose |
+|---------|---------|------|---------|
+| **Flask UI** | `python app.py` | `:5000` | Server-rendered web interface (`templates/index.html`) for interactive use |
+| **FastAPI API** | `uvicorn fastapi_service.main:app --reload --port 8000` | `:8000` | Typed, async JSON API with auto-generated docs at [`/docs`](http://localhost:8000/docs) |
+
+### Why both?
+
+- **Flask** serves the existing HTML/JS frontend and is ideal for the
+  server-rendered dashboard.
+- **FastAPI** adds a fully-typed, async API layer with Pydantic validation,
+  OpenAPI/Swagger docs, and non-blocking I/O via `httpx`.  It is the better
+  choice for programmatic consumers, mobile apps, or any client that benefits
+  from auto-generated SDKs.
+
+Both services share the **same model weights** (loaded from `models/`) and the
+**same inference code** (`webapp/inference.py`), so predictions are identical
+regardless of which port you call.
+
+### Quick Start
+
+```bash
+# Install base + FastAPI dependencies
+pip install -r requirements.txt
+pip install -r requirements-fastapi.txt
+
+# Terminal 1 — Flask UI
+python app.py
+
+# Terminal 2 — FastAPI API
+uvicorn fastapi_service.main:app --reload --port 8000
+```
+
+---
+
 ## Demo Video
 Link: [Demo_video](https://youtu.be/kTe2f6dshtI)
 
